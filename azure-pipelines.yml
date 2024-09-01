@@ -1,0 +1,49 @@
+# Node.js with React
+# Build a Node.js project that uses React.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - main
+
+pool:
+  name: Default
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+  displayName: 'Install Node.js'
+
+- script:    
+    npm install
+  displayName: 'npm install'
+- script:
+    npm run build
+  displayName: 'building the project'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.Repository.LocalPath)/dist'
+    Contents: '**'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publish Artifact: drop'
+
+- task: WindowsMachineFileCopy@2
+  inputs:
+    SourcePath: '$(Build.ArtifactStagingDirectory)'
+    MachineNames: '2.186.229.181'
+    AdminUserName: 'administrator'
+    AdminPassword: $(AdminPassword)
+    TargetPath: 'E:\TaxUi'
+  displayName: 'Copy build files to remote server'
